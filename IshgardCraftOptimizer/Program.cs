@@ -527,7 +527,8 @@ namespace IshgardCraftOptimizer
                     calcTable.Rows[i][colName] = false;
                 }
 
-                if(possibleCraft[i])
+                //possibleCraftsRemain is defaulted to false, but if any craft is listed as a possible craft, set it to true so we know there's more to do
+                if (possibleCraft[i])
                 {
                     possibleCraftsRemain = true;
                 }
@@ -620,7 +621,7 @@ namespace IshgardCraftOptimizer
         public Crafters First { get; private set; }
         public Crafters Second { get; private set; }
         public Crafters? Final { get; private set; }
-        public int Length { get; private set; }
+        public int Length { get; private set; }//i dont think this is needed anymore
 
         public CraftingPath(Crafters first, Crafters second, Crafters? final)
         {
@@ -635,6 +636,7 @@ namespace IshgardCraftOptimizer
             }
         }
 
+        //im  not actually using this anywhere, i can probably axe it
         public override string ToString()
         {
             if (Final.HasValue)
