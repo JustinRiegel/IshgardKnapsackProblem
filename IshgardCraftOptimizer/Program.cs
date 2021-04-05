@@ -621,19 +621,12 @@ namespace IshgardCraftOptimizer
         public Crafters First { get; private set; }
         public Crafters Second { get; private set; }
         public Crafters? Final { get; private set; }
-        public int Length { get; private set; }//i dont think this is needed anymore
 
         public CraftingPath(Crafters first, Crafters second, Crafters? final)
         {
-            Length = 2;//2 crafts is the minimum possible, so we can safely assume the first and second craft will never be null
             First = first;
             Second = second;
             Final = final;
-
-            if (Final != null)
-            {
-                Length++;
-            }
         }
 
         //im  not actually using this anywhere, i can probably axe it
