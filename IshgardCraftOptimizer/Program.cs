@@ -561,27 +561,6 @@ namespace IshgardCraftOptimizer
                         _craftsAvailablePerCrafter[(Crafters)i] = _craftingInventory[mat];
                     }
                 }
-                
-
-                //for (int j = 0; j < COUNT_OF_MATERIALS; j++)
-                //{
-                //    //if the Crafter (i) uses the Material (j), see how many crafts we can get using the material
-                //    if ((bool)_constCrafterMaterialTable.Rows[i][j])
-                //    {
-                //        materialsFound++;
-                //        //take the lowest inventory count of the Materials used by the Crafter
-                //        if (_craftingInventory[(Materials)j] < _craftsAvailablePerCrafter[(Crafters)i])
-                //        {
-                //            _craftsAvailablePerCrafter[(Crafters)i] = _craftingInventory[(Materials)j];
-                //        }
-
-                //        //if we have found all 3 Materials for the craft, break out of the material loop early
-                //        if (materialsFound == 3)
-                //        {
-                //            break;
-                //        }
-                //    }
-                //}
             }
         }
 
