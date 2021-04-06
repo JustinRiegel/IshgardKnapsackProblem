@@ -628,16 +628,5 @@ namespace IshgardCraftOptimizer
             Second = second;
             Final = final;
         }
-
-        //im  not actually using this anywhere, i can probably axe it
-        public override string ToString()
-        {
-            if (Final.HasValue)
-            {
-                return $"{First.ToString()} -> {Second.ToString()} -> {Final.ToString()}";
-            }
-
-            return $"{First.ToString()} -> {Second.ToString()}";
-        }
     }
 }
