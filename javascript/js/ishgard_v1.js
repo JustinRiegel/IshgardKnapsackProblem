@@ -160,12 +160,43 @@ class Level80CraftingPath
     }
 }
 
-Main();
+//add a once-on-load method so the recalculation isn't done every time the button is clicked
+
+document.getElementById("calculateButton").onclick = Main;
+let _resultsTextarea = document.getElementById("resultsTextarea");
+
+document.getElementById("errorTextAreaDiv").style.display = "none";
+_resultsTextarea.style.visibility = "hidden";
+
+//put values in the text boxes for testing because im not typing that over and over
+//  document.getElementById("lvl80Logs").value = 375;
+//  document.getElementById("lvl80Wheat").value = 410;
+//  document.getElementById("lvl80Bolls").value = 861;
+//  document.getElementById("lvl80Resin").value = 1415;
+//  document.getElementById("lvl80Tortoises").value = 345;
+//  document.getElementById("lvl80Bluespirit").value = 400;
+//  document.getElementById("lvl80Gold").value = 300;
+//  document.getElementById("lvl80Sand").value = 285;
+//  document.getElementById("lvl80Water").value = 330;
+//  document.getElementById("lvl80Salt").value = 300;
 
 function Main()
 {
-    InitialCrafterPathAndPriorityCalculation()
+    _lvl80CraftingPathDictionary = [];
+    _lvl80CrafterPriorityDictionary = [];
     
+    InitialCrafterPathAndPriorityCalculation();//this can be moved out of main into a "once-on-load" function
+    
+    //clear out the crafting plan
+    _optimizedCraftingPlan = [];
+
+    if(!GetAndValidateUserInput())
+    {
+        return;
+    }
+
+    _resultsTextarea.style.borderWidth = "1px";
+
     //simulated user input #1
     // _userCraftingInventory["Logs"] = 100;
     // _userCraftingInventory["Wheat"] = 20;
@@ -191,16 +222,16 @@ function Main()
     // _userCraftingInventory["Salt"] = 190;
 
     //simulated user input #3
-    _userCraftingInventory["Logs"] = 375;
-    _userCraftingInventory["Wheat"] = 410;
-    _userCraftingInventory["Bolls"] = 861;
-    _userCraftingInventory["Resin"] = 1415;
-    _userCraftingInventory["Tortoises"] = 345;
-    _userCraftingInventory["Bluespirit"] = 400;
-    _userCraftingInventory["Gold"] = 300;
-    _userCraftingInventory["Sand"] = 285;
-    _userCraftingInventory["Water"] = 330;
-    _userCraftingInventory["Salt"] = 300;
+    // _userCraftingInventory["Logs"] = 375;
+    // _userCraftingInventory["Wheat"] = 410;
+    // _userCraftingInventory["Bolls"] = 861;
+    // _userCraftingInventory["Resin"] = 1415;
+    // _userCraftingInventory["Tortoises"] = 345;
+    // _userCraftingInventory["Bluespirit"] = 400;
+    // _userCraftingInventory["Gold"] = 300;
+    // _userCraftingInventory["Sand"] = 285;
+    // _userCraftingInventory["Water"] = 330;
+    // _userCraftingInventory["Salt"] = 300;
 
     //simulated user input #4
     // _userCraftingInventory["Logs"] = 100;
@@ -214,16 +245,8 @@ function Main()
     // _userCraftingInventory["Water"] = 100;
     // _userCraftingInventory["Salt"] = 100;
 
-    //reduce the inventory 
-    for(let mat in _userCraftingInventory)
-    {
-        _userCraftingInventory[mat] = parseInt(_userCraftingInventory[mat]/PER_MATERIAL_COST);
-    }
-
     CalculateLevel80CraftingInventoryAndCounts();
 
-    // let maxCrafter = "";
-    // let maxCount = 0;
     let maxCrafterAndCount = GetCrafterWithHighestCount();
     while(maxCrafterAndCount.maxCount > 0)
     {
@@ -265,7 +288,49 @@ function Main()
         finalCraftCount += _optimizedCraftingPlan[i].Count;
     }
     _optimizedCraftingPlanString += "for a total of " + finalCraftCount + " craft(s).";
-    alert(_optimizedCraftingPlanString);
+
+    resultsTextarea.textContent = _optimizedCraftingPlanString;
+}
+
+function GetAndValidateUserInput()
+{
+    let errorExists = false;
+    let textboxValue = -1;
+    let errorString = "The following fields are not positive whole numbers:\r\n";
+
+    for(let mat in _userCraftingInventory)
+    {
+        //this will return the value of the text box, or NaN if it contains non-numeric characters
+        textboxValue = Number(document.getElementById("lvl80" + mat).value);
+        
+        //if the textbox value isn't a positive whole number
+        if(Number.isNaN(textboxValue) || textboxValue < 0 || !Number.isInteger(textboxValue))
+        {
+            errorString += mat + "\r\n";
+            errorExists = true;
+        }
+        //the value is valid, but check if there are existing errors. no need to do calculations or assign variables if there are
+        else if(!errorExists)
+        {
+            //get the value from the appropriate textbox, i.e. lvl80Logs
+            //then reduce it to the number of crafts it can be used in by dividing by how many are used per craft
+            _userCraftingInventory[mat] = parseInt(textboxValue / PER_MATERIAL_COST);//using parseInt here forces integer division
+        }
+    }
+
+    if(errorExists)
+    {
+        //errorString = errorString.substring(0, errorString.length - 2);//trim off the ending ", "
+        document.getElementById("errorTextArea").textContent = errorString;
+        document.getElementById("errorTextAreaDiv").style.display = "block";
+        _resultsTextarea.style.visibility = "hidden";
+        return false;
+    }
+    
+    document.getElementById("errorTextArea").textContent = "";
+    document.getElementById("errorTextAreaDiv").style.display = "none";
+    _resultsTextarea.style.visibility = "visible";
+    return true;
 }
 
 function InitialCrafterPathAndPriorityCalculation()
@@ -440,14 +505,6 @@ function CalculateLevel80CraftingInventoryAndCounts()
         
         //find the crafter row for the crafter we're calculating
         selectedCrafterRow = _lvl80CrafterMatrix.find(x => x.Crafter === crafter);
-        // for(let i = 0; i < _lvl80CrafterMatrix.length; i++)
-        // {
-        //     if(_lvl80CrafterMatrix[i].Crafter === crafter)
-        //     {
-        //         selectedCrafterRow = _lvl80CrafterMatrix[i];
-        //         break;
-        //     }
-        // }
 
         //get the Materials the Crafter uses and find the lowest count of those Materials, store that as crafts available
         let materialsUsed = GetMaterialsUsedByLevel80Craft(selectedCrafterRow);
