@@ -1,5 +1,6 @@
-let COUNT_OF_CRAFTERS = 8;
-let PER_MATERIAL_COST = 10;
+//#region Members
+let COUNT_OF_CRAFTERS = 8;//constant
+let PER_MATERIAL_COST = 10;//constant
 let _lvl80CrafterMatrix = [
     {
         "Crafter": "CRP",
@@ -106,8 +107,8 @@ let _lvl80CrafterMatrix = [
         "Salt": true
     }
 ];
-let _lvl80CraftingPathDictionary = [];
-let _lvl80CrafterPriorityDictionary = [];
+let _lvl80CraftingPathDictionary = [];//stores the various possible crafting permutations, used to find crafter priority
+let _lvl80CrafterPriorityDictionary = [];//stores which crafter has what priority, higher is better
 let _userCraftingInventory = {
 
     "Logs": 0,
@@ -132,7 +133,7 @@ let _craftsAvailablePerCrafter = {
     "ALC": 0,
     "CUL": 0
 }
-let _optimizedCraftingPlan = [];
+let _optimizedCraftingPlan = [];//stores the user's calculated crafting plan
 let _optimizedCraftingPlanString = "";
 
 class Level80CraftingPath
@@ -160,33 +161,43 @@ class Level80CraftingPath
     }
 }
 
-//add a once-on-load method so the recalculation isn't done every time the button is clicked
+//#region Web controls
 
-document.getElementById("calculateButton").onclick = Main;
 let _resultsTextarea = document.getElementById("resultsTextarea");
+let _errorTextarea = document.getElementById("errorTextArea");
+let _errorTextareaDiv = document.getElementById("errorTextAreaDiv");
 
-document.getElementById("errorTextAreaDiv").style.display = "none";
-_resultsTextarea.style.visibility = "hidden";
+//#endregion
 
-//put values in the text boxes for testing because im not typing that over and over
-//  document.getElementById("lvl80Logs").value = 375;
-//  document.getElementById("lvl80Wheat").value = 410;
-//  document.getElementById("lvl80Bolls").value = 861;
-//  document.getElementById("lvl80Resin").value = 1415;
-//  document.getElementById("lvl80Tortoises").value = 345;
-//  document.getElementById("lvl80Bluespirit").value = 400;
-//  document.getElementById("lvl80Gold").value = 300;
-//  document.getElementById("lvl80Sand").value = 285;
-//  document.getElementById("lvl80Water").value = 330;
-//  document.getElementById("lvl80Salt").value = 300;
+//#endregion
 
-function Main()
+OnLoad();//i know i could just have this method's contents here, since i only call them once, but it helps me mentally encapsulate
+
+function OnLoad()
 {
-    _lvl80CraftingPathDictionary = [];
-    _lvl80CrafterPriorityDictionary = [];
+    document.getElementById("calculateButton").onclick = Level80CalculateButtonClick;
+    document.getElementById("resetButton").onclick = ResetLevel80Fields;
     
-    InitialCrafterPathAndPriorityCalculation();//this can be moved out of main into a "once-on-load" function
+    _errorTextareaDiv.style.display = "none";
+    _resultsTextarea.style.visibility = "hidden";
     
+    //put values in the text boxes for testing because im not typing that over and over
+    //  document.getElementById("lvl80Logs").value = 375;
+    //  document.getElementById("lvl80Wheat").value = 410;
+    //  document.getElementById("lvl80Bolls").value = 861;
+    //  document.getElementById("lvl80Resin").value = 1415;
+    //  document.getElementById("lvl80Tortoises").value = 345;
+    //  document.getElementById("lvl80Bluespirit").value = 400;
+    //  document.getElementById("lvl80Gold").value = 300;
+    //  document.getElementById("lvl80Sand").value = 285;
+    //  document.getElementById("lvl80Water").value = 330;
+    //  document.getElementById("lvl80Salt").value = 300;
+
+    InitialCrafterPathAndPriorityCalculation();
+}
+
+function Level80CalculateButtonClick()
+{
     //clear out the crafting plan
     _optimizedCraftingPlan = [];
 
@@ -247,12 +258,9 @@ function Main()
 
     CalculateLevel80CraftingInventoryAndCounts();
 
-    let maxCrafterAndCount = GetCrafterWithHighestCount();
+    let maxCrafterAndCount = GetLevel80CrafterWithHighestCount();
     while(maxCrafterAndCount.maxCount > 0)
     {
-        //get the crafter
-        //get the count
-
         //get the list of used materials
         let affectedMaterials = GetMaterialsUsedByLevel80Craft(_lvl80CrafterMatrix.find(x => x.Crafter === maxCrafterAndCount.maxCrafter));
         //update the user's inventory
@@ -277,7 +285,7 @@ function Main()
         //recalculate available crafts
         CalculateLevel80CraftingInventoryAndCounts();
         //get highest crafter count
-        maxCrafterAndCount = GetCrafterWithHighestCount();
+        maxCrafterAndCount = GetLevel80CrafterWithHighestCount();
     }
 
     _optimizedCraftingPlanString = "Your optimized crafting plan is:\r\n";
@@ -287,7 +295,7 @@ function Main()
         _optimizedCraftingPlanString += "Craft " + _optimizedCraftingPlan[i].Crafter + " " + _optimizedCraftingPlan[i].Count + " time(s)\r\n";
         finalCraftCount += _optimizedCraftingPlan[i].Count;
     }
-    _optimizedCraftingPlanString += "for a total of " + finalCraftCount + " craft(s).";
+    _optimizedCraftingPlanString += "for a total of " + finalCraftCount + " craft(s)";
 
     resultsTextarea.textContent = _optimizedCraftingPlanString;
 }
@@ -318,28 +326,104 @@ function GetAndValidateUserInput()
         }
     }
 
+    //if an error exists, hide the results and show the error content
     if(errorExists)
     {
-        //errorString = errorString.substring(0, errorString.length - 2);//trim off the ending ", "
-        document.getElementById("errorTextArea").textContent = errorString;
-        document.getElementById("errorTextAreaDiv").style.display = "block";
+        _errorTextarea.textContent = errorString;
+        _errorTextareaDiv.style.display = "block";
         _resultsTextarea.style.visibility = "hidden";
         return false;
     }
     
-    document.getElementById("errorTextArea").textContent = "";
-    document.getElementById("errorTextAreaDiv").style.display = "none";
+    //if there's not an error, hide the error and show the results
+    _errorTextarea.textContent = "";
+    _errorTextareaDiv.style.display = "none";
     _resultsTextarea.style.visibility = "visible";
     return true;
 }
 
-function InitialCrafterPathAndPriorityCalculation()
+function ResetLevel80Fields()
+{
+    _errorTextarea.textContent = "";
+    _errorTextareaDiv.style.display = "none";
+    _resultsTextarea.style.visibility = "hidden";
+
+    //im not making variable names for these because im only addressing them here
+    document.getElementById("lvl80Logs").value = "";
+    document.getElementById("lvl80Wheat").value = "";
+    document.getElementById("lvl80Bolls").value = "";
+    document.getElementById("lvl80Resin").value = "";
+    document.getElementById("lvl80Tortoises").value = "";
+    document.getElementById("lvl80Bluespirit").value = "";
+    document.getElementById("lvl80Gold").value = "";
+    document.getElementById("lvl80Sand").value = "";
+    document.getElementById("lvl80Water").value = "";
+    document.getElementById("lvl80Salt").value = "";
+}
+
+//#region Universal methods
+
+function InitialCrafterPathAndPriorityCalculation()//change this to take in a variable of which level crafter to calculate?
 {
     for (let i = 0; i < COUNT_OF_CRAFTERS; i++)
     {
         CalculateLeveL80CraftingPaths(i);
     }
 }
+
+//copies the values of one array into another so we have a ByValue copy rather than a reference
+function DeepCopyAnArray(sourceArray)
+{
+    let returnArray = [];
+    for (let i = 0; i < sourceArray.length; i++)
+    {
+        returnArray.push(JSON.parse(JSON.stringify(sourceArray[i])));
+    }
+
+    return returnArray;
+}
+
+//this function is meant to be run after it has been determined which materials were used in the previous craft.
+//it will then update both the passed-in calcTable (NOTE: it is important this is NOT the base crafting matrix table
+//  as this function will modify what is passed in to reflect what materials are no longer available) and it will
+//modify the possibleCraft array, which is an 8-length array of booleans indicating if the crafter of the same index
+//is still available to be used.
+//it will return a boolean indicating if more crafts can be made after the used materials are removed from the pool
+function RemoveInvalidCrafts(calcTable, usedMaterials, possibleCraft)
+{
+    var possibleCraftsRemain = false;
+    //remove all crafts that were affected by the materials used in the previous craft
+
+    //do a counting loop over each crafter in the matrix. i want a counting loop so i can use the count variable
+    for (let i = 0; i < COUNT_OF_CRAFTERS; i++)
+    {
+        //for the given row, in each column that was affected by the previous craft, set it to false
+        for(let j = 0; j < usedMaterials.length; j++)//let usedCol in usedMaterials)
+        {
+            if(calcTable[i][usedMaterials[j]] == true)
+            {
+                //this row uses a column that was used by the previous craft, meaning this craft can no longer be used
+                //remove it as a possible craft
+                possibleCraft[i] = false;//<-- this is why i wanted the counting variable
+            }
+
+            //regardless of if it was initially true, this material(column) was used, so it needs to be set to false for every craft
+            calcTable[i][usedMaterials[j]] = false;            
+        }
+
+        //possibleCraftsRemain is defaulted to false, but if any craft is listed as a possible craft, set it to true so we know there's more to do
+        if(possibleCraft[i])
+        {
+            possibleCraftsRemain = true;
+        }
+    }
+
+    return possibleCraftsRemain;
+}
+
+//#endregion
+
+//#region Level 80 Crafter calculations
 
 function CalculateLeveL80CraftingPaths(crafterId)//previously this was an int, should be the 3-letter abbreviation here
 {
@@ -443,56 +527,6 @@ function GetMaterialsUsedByLevel80Craft(crafterRow)
     return returnList;
 }
 
-//copies the values of one array into another so we have a ByValue copy rather than a reference
-function DeepCopyAnArray(sourceArray)
-{
-    let returnArray = [];
-    for (let i = 0; i < sourceArray.length; i++)
-    {
-        returnArray.push(JSON.parse(JSON.stringify(sourceArray[i])));
-    }
-
-    return returnArray;
-}
-
-//this function is meant to be run after it has been determined which materials were used in the previous craft.
-//it will then update both the passed-in calcTable (NOTE: it is important this is NOT the base crafting matrix table
-//  as this function will modify what is passed in to reflect what materials are no longer available) and it will
-//modify the possibleCraft array, which is an 8-length array of booleans indicating if the crafter of the same index
-//is still available to be used.
-//it will return a boolean indicating if more crafts can be made after the used materials are removed from the pool
-function RemoveInvalidCrafts(calcTable, usedMaterials, possibleCraft)
-{
-    var possibleCraftsRemain = false;
-    //remove all crafts that were affected by the materials used in the previous craft
-
-    //do a counting loop over each crafter in the matrix. i want a counting loop so i can use the count variable
-    for (let i = 0; i < COUNT_OF_CRAFTERS; i++)
-    {
-        //for the given row, in each column that was affected by the previous craft, set it to false
-        for(let j = 0; j < usedMaterials.length; j++)//let usedCol in usedMaterials)
-        {
-            if(calcTable[i][usedMaterials[j]] == true)
-            {
-                //this row uses a column that was used by the previous craft, meaning this craft can no longer be used
-                //remove it as a possible craft
-                possibleCraft[i] = false;//<-- this is why i wanted the counting variable
-            }
-
-            //regardless of if it was initially true, this material(column) was used, so it needs to be set to false for every craft
-            calcTable[i][usedMaterials[j]] = false;            
-        }
-
-        //possibleCraftsRemain is defaulted to false, but if any craft is listed as a possible craft, set it to true so we know there's more to do
-        if(possibleCraft[i])
-        {
-            possibleCraftsRemain = true;
-        }
-    }
-
-    return possibleCraftsRemain;
-}
-
 function CalculateLevel80CraftingInventoryAndCounts()
 {
     let selectedCrafterRow = [];
@@ -518,7 +552,7 @@ function CalculateLevel80CraftingInventoryAndCounts()
     }
 }
 
-function GetCrafterWithHighestCount()
+function GetLevel80CrafterWithHighestCount()
 {
     let maxCount = -1;
     let maxCrafter = "";
@@ -578,3 +612,5 @@ function GetCrafterWithHighestCount()
 
     return { maxCrafter, maxCount };
 }
+
+//#endregion
