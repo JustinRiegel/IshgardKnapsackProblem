@@ -1,4 +1,4 @@
-# IshgardCraftOptimizer
+# IshgardKnapsackProblem
 
 The plan for this project is simple: given an amount of Ishgard crafting materials, what is the most number of items you can make with them?
 
